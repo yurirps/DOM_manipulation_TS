@@ -17,6 +17,8 @@ h1 {
 
 #slide-elements {
     display: grid;
+    grid-area: 1/1;
+    
 }
 
 #slide-elements > * {
@@ -30,3 +32,20 @@ h1 {
     visibility: visible;
 }
 
+#slide {
+    display: grid;
+}
+
+#slide-controls {
+    grid-area: 1/1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Controls buttons */
+
+#slide-controls button {
+    opacity: 0;
+    appearance: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
