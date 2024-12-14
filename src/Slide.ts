@@ -9,7 +9,9 @@ export default class Slide {
     public slide: Element
     public timeout: Timeout | null;
     public pausedTimeout: Timeout | null
-    public paused: boolean
+    public paused: boolean;
+    public thumbItens: HTMLElement[] | null
+    public thumb: HTMLElement | null
 
     constructor(
         container: Element,
@@ -24,10 +26,13 @@ export default class Slide {
 
         this.timeout = null
         this.pausedTimeout = null
-        this.index = 0
+        this.index = localStorage.getItem('activeSlide') ? Number(localStorage.getItem('activeSlide')) : 0
         this.slide = this.slides[this.index]
 
         this.paused = false
+
+        this.thumbItens = null
+        this.thumb = null
 
         this.init();
 
@@ -35,19 +40,48 @@ export default class Slide {
 
     hide(el: Element) {
         el.classList.remove('active')
+        if (el instanceof HTMLVideoElement) {
+            el.currentTime = 0
+            el.pause()
+        }
     }
 
     show(index: number) {
         this.index = index
         this.slide = this.slides[this.index]
+
+        localStorage.setItem("activeSlide", String(this.index))
+
+        if (this.thumbItens) {
+            this.thumb = this.thumbItens[this.index]
+            this.thumbItens.forEach((el) => el.classList.remove('active'))
+            this.thumb.classList.add('active')
+        }
+
         this.slides.forEach((el) => this.hide(el))
         this.slide.classList.add('active')
-        this.auto(this.time)
+
+        if (this.slide instanceof HTMLVideoElement) {
+            this.autoVideo(this.slide)
+        } else {
+            this.auto(this.time)
+        }
+    }
+
+    autoVideo(video: HTMLVideoElement) {
+        video.muted = true;
+        video.play()
+        let firstPlay = true
+        video.addEventListener('playing', () => {
+            if (firstPlay) this.auto(video.duration * 1000)
+            firstPlay = false
+        })
     }
 
     auto(time: number) {
         this.timeout?.clear();
         this.timeout = new Timeout(() => this.next(), time)
+        if (this.thumb) this.thumb.style.animationDuration = `${time}ms`
 
     }
 
@@ -64,19 +98,25 @@ export default class Slide {
     }
 
     pause() {
-        console.log('pause')
+        document.body.classList.add('paused')
+
         this.pausedTimeout = new Timeout(() => {
             this.timeout?.pause()
             this.paused = true
+            this.thumb?.classList.add('paused')
+            if (this.slide instanceof HTMLVideoElement) this.slide.pause()
         }, 300)
     }
 
     continue() {
-        console.log('despause')
+        document.body.classList.remove('paused')
+
         this.pausedTimeout?.clear()
         if (this.paused) {
             this.paused = false
             this.timeout?.continue()
+            this.thumb?.classList.remove('paused')
+            if (this.slide instanceof HTMLVideoElement) this.slide.play()
         }
     }
 
@@ -91,15 +131,32 @@ export default class Slide {
 
         //pause
         this.controls.addEventListener('pointerdown', () => this.pause())
-        this.controls.addEventListener('pointerup', () => this.continue())
+        this.controls.addEventListener('touchend', () => this.pause())
+        document.addEventListener('pointerup', () => this.continue())
 
         prevButton.addEventListener('pointerup', () => this.prev())
         nextButton.addEventListener('pointerup', () => this.next())
 
     }
 
+    private addThumbItens() {
+        const thumbContainer = document.createElement('div')
+        thumbContainer.id = 'slide-thumb'
+        for (let i = 0; i < this.slides.length; i++) {
+            thumbContainer.innerHTML += `
+                <span>
+                    <span class='thumb-item'>
+                    </span>
+                </span>
+            `
+        }
+        this.controls.appendChild(thumbContainer)
+        this.thumbItens = Array.from(document.querySelectorAll(".thumb-item"))
+    }
+
     private init() {
         this.addControls()
+        this.addThumbItens()
         this.show(this.index)
     }
 }
