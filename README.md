@@ -1,6 +1,6 @@
-# Manipulação de dados com TypeScript
+# Manipulação do DOM com TypeScript
 
-Projeto da @Origamid onde o foco é a manipular dados, criação de interfaces e boas praticas do uso do TypeScript puro
+Projeto da @Origamid onde o foco é a manipular DOM, criação de interfaces e boas praticas do uso do TypeScript puro
 
 ## Preparando o ambiente
 Instalar o [Node](https://nodejs.org/pt/download/prebuilt-installer)
